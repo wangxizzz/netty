@@ -69,7 +69,7 @@
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcpkix-jdk15on</artifactId>
-      <optional>true</optional>
+      <optional>false</optional>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty.npn</groupId>
