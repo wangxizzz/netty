@@ -3085,11 +3085,13 @@ public abstract class SSLEngineTest {
         assertFalse(serverEngine.isOutboundDone());
 
         ByteBuffer empty = allocateBuffer(0);
-        ByteBuffer cTOs = allocateBuffer(clientEngine.getSession().getPacketBufferSize());
-        ByteBuffer sTOs = allocateBuffer(serverEngine.getSession().getPacketBufferSize());
 
-        ByteBuffer cApps = allocateBuffer(clientEngine.getSession().getApplicationBufferSize());
-        ByteBuffer sApps = allocateBuffer(serverEngine.getSession().getApplicationBufferSize());
+        // Ensure we allocate a bit more so we can fit in multiple packets. This is needed as we may call multiple
+        // time wrap / unwrap in a for loop before we drain the buffer we are writing in.
+        ByteBuffer cTOs = allocateBuffer(clientEngine.getSession().getPacketBufferSize() * 4);
+        ByteBuffer sTOs = allocateBuffer(serverEngine.getSession().getPacketBufferSize() * 4);
+        ByteBuffer cApps = allocateBuffer(clientEngine.getSession().getApplicationBufferSize() * 4);
+        ByteBuffer sApps = allocateBuffer(serverEngine.getSession().getApplicationBufferSize() * 4);
 
         clientEngine.closeOutbound();
         for (;;) {
