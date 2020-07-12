@@ -1,4 +1,4 @@
-package myhandler;
+package io.netty.example.demo.day01;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;

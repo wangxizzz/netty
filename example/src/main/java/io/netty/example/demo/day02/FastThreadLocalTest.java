@@ -1,4 +1,4 @@
-package day02;
+package io.netty.example.demo.day02;
 
 import io.netty.util.concurrent.FastThreadLocal;
 
