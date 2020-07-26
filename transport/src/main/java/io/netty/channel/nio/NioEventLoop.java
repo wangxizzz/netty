@@ -62,8 +62,13 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
     private static final boolean DISABLE_KEY_SET_OPTIMIZATION =
             SystemPropertyUtil.getBoolean("io.netty.noKeySetOptimization", false);
-
+    /**
+     * 少于该 N 值，不开启空轮询重建新的 Selector 对象的功能
+     */
     private static final int MIN_PREMATURE_SELECTOR_RETURNS = 3;
+    /**
+     * NIO Selector 空轮询该 N 次后，重建新的 Selector 对象
+     */
     private static final int SELECTOR_AUTO_REBUILD_THRESHOLD;
 
     private final IntSupplier selectNowSupplier = new IntSupplier() {
@@ -791,6 +796,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     }
 
     Selector unwrappedSelector() {
+        // 每个 NioEventLoop独有一个Selector
         return unwrappedSelector;
     }
 

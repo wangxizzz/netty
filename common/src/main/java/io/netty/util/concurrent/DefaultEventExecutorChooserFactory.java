@@ -40,6 +40,7 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
     }
 
     private static boolean isPowerOfTwo(int val) {
+        // 负数的补码是 数值位按位取反+1
         return (val & -val) == val;
     }
 

@@ -463,11 +463,12 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             }
 
             AbstractChannel.this.eventLoop = eventLoop;
-
+            // 此时 EventLoop绑定的thread为null
             if (eventLoop.inEventLoop()) {
                 register0(promise);
             } else {
                 try {
+                    // main线程返回了，线程切换为NIOEventLoop
                     eventLoop.execute(new Runnable() {
                         @Override
                         public void run() {
@@ -526,6 +527,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
         @Override
         public final void bind(final SocketAddress localAddress, final ChannelPromise promise) {
+            // 判断是否是当前eventLoop线程
             assertEventLoop();
 
             if (!promise.setUncancellable() || !ensureOpen(promise)) {
@@ -547,6 +549,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
             boolean wasActive = isActive();
             try {
+                // 真正的绑定操作
                 doBind(localAddress);
             } catch (Throwable t) {
                 safeSetFailure(promise, t);
