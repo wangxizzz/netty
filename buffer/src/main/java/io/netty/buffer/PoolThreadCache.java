@@ -142,7 +142,7 @@ final class PoolThreadCache {
             int arraySize = Math.max(1, log2(max / area.pageSize) + 1);
 
             @SuppressWarnings("unchecked")
-            MemoryRegionCache<T>[] cache = new MemoryRegionCache[arraySize];
+            MemoryRegionCache<T>[] cache = new MemoryRegionCache[arraySize]; // arraySize默认是3
             for (int i = 0; i < cache.length; i++) {
                 cache[i] = new NormalMemoryRegionCache<T>(cacheSize);
             }
@@ -368,6 +368,7 @@ final class PoolThreadCache {
     }
 
     private abstract static class MemoryRegionCache<T> {
+        // 队列大小
         private final int size;
         private final Queue<Entry<T>> queue;
         private final SizeClass sizeClass;
@@ -387,6 +388,7 @@ final class PoolThreadCache {
 
         /**
          * Add to cache if not already full.
+         * 添加( 缓存 )内存块到队列
          */
         @SuppressWarnings("unchecked")
         public final boolean add(PoolChunk<T> chunk, ByteBuffer nioBuffer, long handle) {
@@ -402,6 +404,8 @@ final class PoolThreadCache {
 
         /**
          * Allocate something out of the cache if possible and remove the entry from the cache.
+         *
+         * 从队列中获取缓存的内存块，初始化到 PooledByteBuf 对象中，并返回是否分配成功
          */
         public final boolean allocate(PooledByteBuf<T> buf, int reqCapacity, PoolThreadCache threadCache) {
             Entry<T> entry = queue.poll();
@@ -409,6 +413,10 @@ final class PoolThreadCache {
                 return false;
             }
             initBuf(entry.chunk, entry.nioBuffer, entry.handle, buf, reqCapacity, threadCache);
+            /**
+             * entry.recycle()这步将Entry对象回收，因为Entry对象弹出之后没有再被引用，所以可能GC会将Entry对象回收。
+             * Netty为了将对象循环利用，将其放在对象回收站进行回收
+             */
             entry.recycle();
 
             // allocations is not thread-safe which is fine as this is only called from the same thread all time.
@@ -469,6 +477,7 @@ final class PoolThreadCache {
             final Handle<Entry<?>> recyclerHandle;
             PoolChunk<T> chunk;
             ByteBuffer nioBuffer;
+            // 内存块在chunk的id
             long handle = -1;
 
             Entry(Handle<Entry<?>> recyclerHandle) {
@@ -485,7 +494,9 @@ final class PoolThreadCache {
 
         @SuppressWarnings("rawtypes")
         private static Entry newEntry(PoolChunk<?> chunk, ByteBuffer nioBuffer, long handle) {
+            // 从对象池获取Entry对象
             Entry entry = RECYCLER.get();
+            // handle 与chunk可以唯一确定一块内存
             entry.chunk = chunk;
             entry.nioBuffer = nioBuffer;
             entry.handle = handle;

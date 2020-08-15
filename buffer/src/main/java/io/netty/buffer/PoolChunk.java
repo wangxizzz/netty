@@ -113,14 +113,20 @@ final class PoolChunk<T> implements PoolChunkMetric {
     final int offset;
     private final byte[] memoryMap;
     private final byte[] depthMap;
+    // PoolSubpage 数组。每个节点对应一个 PoolSubpage 对象。因为实际上，每个 Page 还是比较大的内存块，可以进一步切分成小块 SubPage
     private final PoolSubpage<T>[] subpages;
     /** Used to determine if the requested capacity is equal to or greater than pageSize. */
     private final int subpageOverflowMask;
+    // 每个 Page 的大小。默认为 8KB = 8192B, 单位为字节
     private final int pageSize;
+    // 从 1 开始左移到 pageSize 的位数。默认 13 ，1 << 13 = 8192
     private final int pageShifts;
+    // 满二叉树的高度。默认为 11 。注意，层高是从 0 开始
     private final int maxOrder;
+    // 单位为byte，初始为 16777216 byte
     private final int chunkSize;
     private final int log2ChunkSize;
+    // 默认一个chunk可分配的最大page数，2048
     private final int maxSubpageAllocs;
     /** Used to mark memory as unusable */
     private final byte unusable;
@@ -148,8 +154,10 @@ final class PoolChunk<T> implements PoolChunkMetric {
         this.pageSize = pageSize;
         this.pageShifts = pageShifts;
         this.maxOrder = maxOrder;
+        // chunkSize默认是 16M * 1024
         this.chunkSize = chunkSize;
         this.offset = offset;
+        // 默认为12
         unusable = (byte) (maxOrder + 1);
         log2ChunkSize = log2(chunkSize);
         subpageOverflowMask = ~(pageSize - 1);
@@ -159,7 +167,7 @@ final class PoolChunk<T> implements PoolChunkMetric {
         maxSubpageAllocs = 1 << maxOrder;
 
         // Generate the memory map.
-        memoryMap = new byte[maxSubpageAllocs << 1];
+        memoryMap = new byte[maxSubpageAllocs << 1];    // 默认是2的12次方--4096
         depthMap = new byte[memoryMap.length];
         int memoryMapIndex = 1;
         for (int d = 0; d <= maxOrder; ++ d) { // move down the tree one level at a time
@@ -293,10 +301,13 @@ final class PoolChunk<T> implements PoolChunkMetric {
     private int allocateNode(int d) {
         int id = 1;
         int initial = - (1 << d); // has last d bits = 0 and rest all = 1
+        // 获得根节点的指值。
+        // 如果根节点的值，大于 d ，说明，第 d 层没有符合的节点，也就是说 [0, d-1] 层也没有符合的节点。即，当前 Chunk 没有符合的节点。
         byte val = value(id);
         if (val > d) { // unusable
             return -1;
         }
+
         while (val < d || (id & initial) == 0) { // id & initial == 1 << d for all ids at depth d, for < d it is 0
             id <<= 1;
             val = value(id);
@@ -320,11 +331,14 @@ final class PoolChunk<T> implements PoolChunkMetric {
      * @return index in memoryMap
      */
     private long allocateRun(int normCapacity) {
+        // 获取层级
         int d = maxOrder - (log2(normCapacity) - pageShifts);
+        // 获得节点
         int id = allocateNode(d);
         if (id < 0) {
             return id;
         }
+        // 减少剩余可用字节数
         freeBytes -= runLength(id);
         return id;
     }
@@ -390,6 +404,7 @@ final class PoolChunk<T> implements PoolChunkMetric {
             }
         }
         freeBytes += runLength(memoryMapIdx);
+        // 重置memory的值
         setValue(memoryMapIdx, depth(memoryMapIdx));
         updateParentsFree(memoryMapIdx);
 
@@ -399,13 +414,17 @@ final class PoolChunk<T> implements PoolChunkMetric {
         }
     }
 
+    // 初始化分配的内存块到 PooledByteBuf 中
     void initBuf(PooledByteBuf<T> buf, ByteBuffer nioBuffer, long handle, int reqCapacity,
                  PoolThreadCache threadCache) {
+        // 获得 memoryMap 数组的编号( 下标 )
         int memoryMapIdx = memoryMapIdx(handle);
         int bitmapIdx = bitmapIdx(handle);
+        // 内存块为Page
         if (bitmapIdx == 0) {
             byte val = value(memoryMapIdx);
             assert val == unusable : String.valueOf(val);
+            // 初始化buf 内存地址
             buf.init(this, nioBuffer, handle, runOffset(memoryMapIdx) + offset,
                     reqCapacity, runLength(memoryMapIdx), threadCache);
         } else {
@@ -456,6 +475,9 @@ final class PoolChunk<T> implements PoolChunkMetric {
         return 1 << log2ChunkSize - depth(id);
     }
 
+    /**
+     * 偏移量相当于分配给缓冲区的这块内存 相对于Chunk中申请的内存的首地址偏移了多少
+     */
     private int runOffset(int id) {
         // represents the 0-based offset in #bytes from start of the byte-array chunk
         int shift = id ^ 1 << depth(id);

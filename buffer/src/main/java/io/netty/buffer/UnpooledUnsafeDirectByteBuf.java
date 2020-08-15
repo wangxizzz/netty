@@ -29,6 +29,7 @@ import java.nio.ByteBuffer;
  */
 public class UnpooledUnsafeDirectByteBuf extends UnpooledDirectByteBuf {
 
+    // DirectByteBuf的内存地址
     long memoryAddress;
 
     /**
@@ -80,6 +81,12 @@ public class UnpooledUnsafeDirectByteBuf extends UnpooledDirectByteBuf {
         return memoryAddress;
     }
 
+    /**
+     * 根据Index获取数据
+     *
+     * @param index
+     * @return
+     */
     @Override
     public byte getByte(int index) {
         checkIndex(index);
@@ -88,6 +95,7 @@ public class UnpooledUnsafeDirectByteBuf extends UnpooledDirectByteBuf {
 
     @Override
     protected byte _getByte(int index) {
+        // 通过内存地址(堆外内存)获取数据
         return UnsafeByteBufUtil.getByte(addr(index));
     }
 

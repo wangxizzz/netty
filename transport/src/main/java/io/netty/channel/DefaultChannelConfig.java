@@ -268,6 +268,7 @@ public class DefaultChannelConfig implements ChannelConfig {
 
     @Override
     public ByteBufAllocator getAllocator() {
+        // 分配一个默认的ByteBufAllocator
         return allocator;
     }
 

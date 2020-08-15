@@ -45,6 +45,7 @@ abstract class PoolArena<T> implements PoolArenaMetric {
     private final int maxOrder;
     final int pageSize;
     final int pageShifts;
+    // 16777216 -> 16M
     final int chunkSize;
     final int subpageOverflowMask;
     final int numSmallSubpagePools;
@@ -143,7 +144,9 @@ abstract class PoolArena<T> implements PoolArenaMetric {
     abstract boolean isDirect();
 
     PooledByteBuf<T> allocate(PoolThreadCache cache, int reqCapacity, int maxCapacity) {
+        // Recycler对象池中获取复用的Buf对象
         PooledByteBuf<T> buf = newByteBuf(maxCapacity);
+        // 内存分配
         allocate(cache, buf, reqCapacity);
         return buf;
     }
@@ -244,6 +247,7 @@ abstract class PoolArena<T> implements PoolArenaMetric {
         }
 
         // Add a new chunk.
+        // 申请16M的内存空间
         PoolChunk<T> c = newChunk(pageSize, maxOrder, pageShifts, chunkSize);
         boolean success = c.allocate(buf, reqCapacity, normCapacity, threadCache);
         assert success;
@@ -273,6 +277,7 @@ abstract class PoolArena<T> implements PoolArenaMetric {
             deallocationsHuge.increment();
         } else {
             SizeClass sizeClass = sizeClass(normCapacity);
+            // 缓存已分配的内存
             if (cache != null && cache.add(this, chunk, nioBuffer, handle, normCapacity, sizeClass)) {
                 // cached so not free it.
                 return;
@@ -659,6 +664,7 @@ abstract class PoolArena<T> implements PoolArenaMetric {
         }
 
         private static byte[] newByteArray(int size) {
+            // 创建一个16M的byte 数组
             return PlatformDependent.allocateUninitializedArray(size);
         }
 
