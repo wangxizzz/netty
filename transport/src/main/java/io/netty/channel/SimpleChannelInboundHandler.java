@@ -40,8 +40,15 @@ import io.netty.util.internal.TypeParameterMatcher;
  * {@link ReferenceCountUtil#retain(Object)} if you pass the object to the next handler in the {@link ChannelPipeline}.
  */
 public abstract class SimpleChannelInboundHandler<I> extends ChannelInboundHandlerAdapter {
-
+    /**
+     * 类型匹配器
+     */
     private final TypeParameterMatcher matcher;
+    /**
+     * 使用完消息，是否自动释放
+     *
+     * @see #channelRead(ChannelHandlerContext, Object)
+     */
     private final boolean autoRelease;
 
     /**
@@ -93,6 +100,7 @@ public abstract class SimpleChannelInboundHandler<I> extends ChannelInboundHandl
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         boolean release = true;
         try {
+            // 判断是否能处理的消息类型
             if (acceptInboundMessage(msg)) {
                 @SuppressWarnings("unchecked")
                 I imsg = (I) msg;
