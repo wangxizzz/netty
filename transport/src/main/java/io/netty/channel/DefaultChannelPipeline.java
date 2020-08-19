@@ -68,7 +68,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     private final ChannelFuture succeededFuture;
     private final VoidChannelPromise voidPromise;
     private final boolean touch = ResourceLeakDetector.isEnabled();
-
+    /**
+     * 子执行器集合。默认情况下，ChannelHandler 使用 Channel 所在的 EventLoop 作为执行器。
+     */
     private Map<EventExecutorGroup, EventExecutor> childExecutors;
     private volatile MessageSizeEstimator.Handle estimatorHandle;
     private boolean firstRegistration = true;

@@ -98,7 +98,9 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     // Lazily instantiated tasks used to trigger events to a handler with different executor.
     // There is no need to make this volatile as at worse it will just create a few more instances then needed.
     private Tasks invokeTasks;
-
+    /**
+     * 处理器状态
+     */
     private volatile int handlerState = INIT;
 
     AbstractChannelHandlerContext(DefaultChannelPipeline pipeline, EventExecutor executor,
