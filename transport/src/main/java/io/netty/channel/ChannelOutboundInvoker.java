@@ -21,6 +21,14 @@ import io.netty.util.concurrent.FutureListener;
 import java.net.ConnectException;
 import java.net.SocketAddress;
 
+/**
+ * Outbound 事件在 Pipeline 中的传输方向是 tail -> head
+ *
+ * Outbound 事件的发起者是 Channel
+ *
+ * Inbound类似于事件回调（响应请求的事件），而Outbound类似于主动触发（发起请求的事件）。注意，如果我们捕获了一个事件，
+ * 并且想让这个事件继续传递下去，那么需要调用Context对应的传播方法fireXXX()方法
+ */
 public interface ChannelOutboundInvoker {
 
     /**

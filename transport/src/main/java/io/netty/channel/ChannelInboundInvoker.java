@@ -15,6 +15,12 @@
  */
 package io.netty.channel;
 
+/**
+ * Inbound 事件在 Pipeline 中传输方向是 head( 头 ) -> tail( 尾 )
+ *
+ * Inbound 事件的处理者是 TailContext, 如果用户没有实现自定义的处理方法,
+ * 那么Inbound 事件默认的处理者是 TailContext, 并且其处理方法是空实现.
+ */
 public interface ChannelInboundInvoker {
 
     /**

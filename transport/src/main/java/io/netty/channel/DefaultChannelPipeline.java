@@ -1299,6 +1299,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
+            // 消息不会走到这里，这里会丢弃消息(消息入站，inboundHandler)
             onUnhandledInboundMessage(ctx, msg);
         }
 
