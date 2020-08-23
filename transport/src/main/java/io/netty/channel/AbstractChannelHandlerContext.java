@@ -84,8 +84,13 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
      * nor {@link ChannelHandler#handlerRemoved(ChannelHandlerContext)} was called.
      */
     private static final int INIT = 0;
-
+    /**
+     * 所属 pipeline
+     */
     private final DefaultChannelPipeline pipeline;
+    /**
+     * handler名字
+     */
     private final String name;
     private final boolean ordered;
     private final int executionMask;
@@ -486,10 +491,11 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
             // cancelled
             return promise;
         }
-
+        // 初始化handler为tail，因此寻找下一个handler
         final AbstractChannelHandlerContext next = findContextOutbound(MASK_BIND);
         EventExecutor executor = next.executor();
         if (executor.inEventLoop()) {
+            // 执行
             next.invokeBind(localAddress, promise);
         } else {
             safeExecute(executor, new Runnable() {

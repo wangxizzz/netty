@@ -54,7 +54,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             new FastThreadLocal<Map<Class<?>, String>>() {
         @Override
         protected Map<Class<?>, String> initialValue() {
-            return new WeakHashMap<Class<?>, String>();
+            return new WeakHashMap<>();
         }
     };
 
@@ -201,10 +201,12 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     public final ChannelPipeline addLast(EventExecutorGroup group, String name, ChannelHandler handler) {
         final AbstractChannelHandlerContext newCtx;
         synchronized (this) {
+            // 检查是否重复添加handler
             checkMultiplicity(handler);
 
             newCtx = newContext(group, filterName(name, handler), handler);
 
+            // 添加context到末尾
             addLast0(newCtx);
 
             // If the registered is false it means that the channel was not registered on an eventLoop yet.
@@ -227,6 +229,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     private void addLast0(AbstractChannelHandlerContext newCtx) {
+        // prev初始化时head节点
         AbstractChannelHandlerContext prev = tail.prev;
         newCtx.prev = prev;
         newCtx.next = tail;
@@ -597,6 +600,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     private static void checkMultiplicity(ChannelHandler handler) {
         if (handler instanceof ChannelHandlerAdapter) {
             ChannelHandlerAdapter h = (ChannelHandlerAdapter) handler;
+            // 若已经添加，并且未使用 @Sharable 注解，则抛出异常
             if (!h.isSharable() && h.added) {
                 throw new ChannelPipelineException(
                         h.getClass().getName() +
