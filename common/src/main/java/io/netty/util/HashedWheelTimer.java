@@ -192,8 +192,11 @@ public class HashedWheelTimer implements Timer {
      * @throws IllegalArgumentException if either of {@code tickDuration} and {@code ticksPerWheel} is &lt;= 0
      */
     public HashedWheelTimer(
-            ThreadFactory threadFactory,
-            long tickDuration, TimeUnit unit, int ticksPerWheel) {
+            ThreadFactory threadFactory,   // 用来创建worker线程
+            long tickDuration,   // tick的时长，也就是指针多久转一格
+            TimeUnit unit,
+            int ticksPerWheel  // 一圈有几格
+    ) {
         this(threadFactory, tickDuration, unit, ticksPerWheel, true);
     }
 
@@ -214,7 +217,9 @@ public class HashedWheelTimer implements Timer {
      */
     public HashedWheelTimer(
         ThreadFactory threadFactory,
-        long tickDuration, TimeUnit unit, int ticksPerWheel, boolean leakDetection) {
+        long tickDuration, TimeUnit unit, int ticksPerWheel,
+        boolean leakDetection  // 是否开启内存泄露检测
+    ) {
         this(threadFactory, tickDuration, unit, ticksPerWheel, leakDetection, -1);
     }
 
@@ -249,6 +254,7 @@ public class HashedWheelTimer implements Timer {
         ObjectUtil.checkPositive(ticksPerWheel, "ticksPerWheel");
 
         // Normalize ticksPerWheel to power of two and initialize the wheel.
+        // 创建时间轮基本的数据结构，一个数组。长度为不小于ticksPerWheel的最小2的n次方
         wheel = createWheel(ticksPerWheel);
         mask = wheel.length - 1;
 
@@ -269,7 +275,7 @@ public class HashedWheelTimer implements Timer {
         } else {
             this.tickDuration = duration;
         }
-
+        // 创建worker线程
         workerThread = threadFactory.newThread(worker);
 
         leak = leakDetection || !workerThread.isDaemon() ? leakDetector.track(this) : null;
@@ -332,6 +338,7 @@ public class HashedWheelTimer implements Timer {
         switch (WORKER_STATE_UPDATER.get(this)) {
             case WORKER_STATE_INIT:
                 if (WORKER_STATE_UPDATER.compareAndSet(this, WORKER_STATE_INIT, WORKER_STATE_STARTED)) {
+                    // 启动worker线程
                     workerThread.start();
                 }
                 break;
@@ -462,12 +469,15 @@ public class HashedWheelTimer implements Timer {
             startTimeInitialized.countDown();
 
             do {
+                // 指针睡眠, 指针往前走了一格，返回当前时间
                 final long deadline = waitForNextTick();
+                // 可能溢出或者被中断的时候会返回负数, 所以小于等于0不管
                 if (deadline > 0) {
                     int idx = (int) (tick & mask);
                     processCancelledTasks();
                     HashedWheelBucket bucket =
                             wheel[idx];
+                    // 从任务队列中取出任务加入到对应的格子中
                     transferTimeoutsToBuckets();
                     bucket.expireTimeouts(deadline);
                     tick++;
@@ -543,6 +553,7 @@ public class HashedWheelTimer implements Timer {
 
             for (;;) {
                 final long currentTime = System.nanoTime() - startTime;
+                // 转换为毫秒
                 long sleepTimeMs = (deadline - currentTime + 999999) / 1000000;
 
                 if (sleepTimeMs <= 0) {
@@ -587,8 +598,9 @@ public class HashedWheelTimer implements Timer {
         private static final int ST_EXPIRED = 2;
         private static final AtomicIntegerFieldUpdater<HashedWheelTimeout> STATE_UPDATER =
                 AtomicIntegerFieldUpdater.newUpdater(HashedWheelTimeout.class, "state");
-
+        // 时间轮引用
         private final HashedWheelTimer timer;
+        // 到期需要执行的任务
         private final TimerTask task;
         private final long deadline;
 
@@ -597,6 +609,7 @@ public class HashedWheelTimer implements Timer {
 
         // remainingRounds will be calculated and set by Worker.transferTimeoutsToBuckets() before the
         // HashedWheelTimeout will be added to the correct HashedWheelBucket.
+        // 离任务执行的轮数，当将次任务加入到格子中是计算该值，每过一轮，该值减一。
         long remainingRounds;
 
         // This will be used to chain timeouts in HashedWheelTimerBucket via a double-linked-list.
