@@ -83,6 +83,7 @@ public abstract class AbstractReferenceCounted implements ReferenceCounted {
 
     private boolean handleRelease(boolean result) {
         if (result) {
+            // 当 refCnt 等于 0 时，调用 deallocate() 方法，进行真正的释放
             deallocate();
         }
         return result;

@@ -558,8 +558,10 @@ public class IdleStateHandler extends ChannelDuplexHandler {
 
             long nextDelay = allIdleTimeNanos;
             if (!reading) {
+                // 当前时间-上次read/write时间，如果大于设置的超时时间，那么就是心跳超时
                 nextDelay -= ticksInNanos() - Math.max(lastReadTime, lastWriteTime);
             }
+            // 如果发生超时，触发channelIdle方法
             if (nextDelay <= 0) {
                 // Both reader and writer are idle - set a new timeout and
                 // notify the callback.

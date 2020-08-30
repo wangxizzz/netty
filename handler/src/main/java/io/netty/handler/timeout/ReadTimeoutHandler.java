@@ -92,6 +92,8 @@ public class ReadTimeoutHandler extends IdleStateHandler {
 
     /**
      * Is called when a read timeout was detected.
+     *
+     * 当 Channel 的读空闲时间( 读或者写 )太长时，抛出 ReadTimeoutException 异常，并自动关闭该 Channel 。
      */
     protected void readTimedOut(ChannelHandlerContext ctx) throws Exception {
         if (!closed) {

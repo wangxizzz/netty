@@ -170,6 +170,7 @@ public abstract class Recycler<T> {
         if (maxCapacityPerThread == 0) {
             return newObject((Handle<T>) NOOP_HANDLE);
         }
+        // 利用threadLocal保证 queue的操作安全性
         Stack<T> stack = threadLocal.get();
         DefaultHandle<T> handle = stack.pop();
         if (handle == null) {
@@ -216,6 +217,7 @@ public abstract class Recycler<T> {
         boolean hasBeenRecycled;
 
         Stack<?> stack;
+        // 真正的复用的对象
         Object value;
 
         DefaultHandle(Stack<?> stack) {

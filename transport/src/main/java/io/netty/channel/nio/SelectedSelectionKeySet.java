@@ -22,7 +22,9 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
-
+    /**
+     * 实现可重用数组
+     */
     SelectionKey[] keys;
     int size;
 
@@ -30,6 +32,11 @@ final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
         keys = new SelectionKey[1024];
     }
 
+    /**
+     * add 为O(1) , 相对于sun.nio.ch.SelectorImpl 的HashSet存储O(lgn)
+     * @param o
+     * @return
+     */
     @Override
     public boolean add(SelectionKey o) {
         if (o == null) {
@@ -94,6 +101,7 @@ final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
     }
 
     private void increaseCapacity() {
+        // 2被扩容
         SelectionKey[] newKeys = new SelectionKey[keys.length << 1];
         System.arraycopy(keys, 0, newKeys, 0, size);
         keys = newKeys;
