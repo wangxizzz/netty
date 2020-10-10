@@ -36,12 +36,12 @@ public class Main {
         System.out.println("start:" + LocalDateTime.now().format(formatter));
 
         hashedWheelTimer.newTimeout(timeout -> {
-            Thread.sleep(3000);
+            Thread.sleep(6000);
             System.out.println("task1:" + LocalDateTime.now().format(formatter));
-        }, 3, TimeUnit.SECONDS);
+        }, 1, TimeUnit.SECONDS);
 
         hashedWheelTimer.newTimeout(timeout -> System.out.println("task2:" + LocalDateTime.now().format(
-                formatter)), 4, TimeUnit.SECONDS);
+                formatter)), 3, TimeUnit.SECONDS);
 
         Thread.sleep(10000);
     }
